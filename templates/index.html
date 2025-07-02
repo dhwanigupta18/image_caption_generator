@@ -7,51 +7,77 @@
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #333; }
-        form { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
-        input[type="file"] { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        input[type="text"] { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .form-section { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; background-color: #f9f9f9; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        input[type="file"], input[type="text"], select, button {
+            width: calc(100% - 22px); /* Account for padding/border */
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 12px 20px;
+            width: auto; /* Allow button to size to its content */
+        }
         button:hover { background-color: #0056b3; }
-        .result { margin-top: 30px; padding: 20px; background-color: #f9f9f9; border: 1px solid #eee; border-radius: 4px; }
-        .result h2 { color: #555; }
-        .caption-box { background-color: white; border: 1px dashed #ccc; padding: 15px; border-radius: 4px; word-wrap: break-word; }
-        .image-preview { max-width: 100%; height: auto; display: block; margin-top: 15px; border: 1px solid #ddd; }
-        .error { color: red; font-weight: bold; }
+        .image-preview { text-align: center; margin-top: 20px; }
+        .image-preview img { max-width: 100%; height: auto; border: 1px solid #eee; border-radius: 5px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+        .caption-output { margin-top: 20px; padding: 15px; border: 1px solid #d4edda; border-radius: 5px; background-color: #d1ecf1; color: #0c5460; font-size: 1.1em; word-wrap: break-word; }
+        .error-message { color: #dc3545; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 5px; margin-top: 15px; }
     </style>
 </head>
 <body>
-    <h1>AI Image Caption Generator</h1>
+    <h1>Image Caption Generator</h1>
 
-    <form method="post" enctype="multipart/form-data">
-        <label for="image">Upload Image:</label>
-        <input type="file" name="image" id="image" accept="image/*" required>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-section">
+            <label for="file">Upload Image:</label>
+            <input type="file" name="file" id="file" accept="image/*" required>
+        </div>
 
-        <label for="prompt">Optional Prompt (e.g., "a photo of"):</label>
-        <input type="text" name="prompt" id="prompt" placeholder="Leave empty for general caption">
+        <div class="form-section">
+            <label for="optional_prompt">Optional Prompt (e.g., "a photo of"):</label>
+            <input type="text" name="optional_prompt" id="optional_prompt" placeholder="e.g., 'A high-resolution image of'">
+        </div>
 
-        <label for="gpt_purpose">GPT Refinement Purpose (e.g., "social media post", "alt text"):</label>
-        <input type="text" name="gpt_purpose" id="gpt_purpose" placeholder="general description">
+        <div class="form-section">
+            <label for="caption_purpose">Refinement Purpose:</label>
+            <select name="caption_purpose" id="caption_purpose">
+                <option value="general description">General Description</option>
+                <option value="social media post">Social Media Post</option>
+                <option value="alt text">Accessibility (Alt Text)</option>
+                <option value="storytelling prompt">Storytelling Prompt</option>
+                <option value="marketing ad copy">Marketing Ad Copy</option>
+            </select>
+        </div>
 
         <button type="submit">Generate Caption</button>
     </form>
 
-    {% if caption or error %}
-    <div class="result">
-        {% if error %}
-            <p class="error">{{ error }}</p>
-        {% endif %}
-        {% if original_caption %}
-            <h2>Original BLIP Caption:</h2>
-            <div class="caption-box">{{ original_caption }}</div>
-        {% endif %}
-        {% if caption and caption != original_caption %}
-            <h2>Refined GPT Caption:</h2>
-            <div class="caption-box">{{ caption }}</div>
-        {% endif %}
-        {% if image_url %}
-            <h2>Uploaded Image:</h2>
-            <img src="{{ image_url }}" alt="Uploaded Image" class="image-preview">
-        {% endif %}
+    {% if error %}
+    <div class="error-message">
+        <p>Error: {{ error }}</p>
+    </div>
+    {% endif %}
+
+    {% if image_url %}
+    <div class="image-preview">
+        <h2>Uploaded Image:</h2>
+        <img src="{{ image_url }}" alt="Uploaded Image">
+    </div>
+    {% endif %}
+
+    {% if caption %}
+    <div class="caption-output">
+        <h2>Generated Caption:</h2>
+        <p>{{ caption }}</p>
     </div>
     {% endif %}
 </body>

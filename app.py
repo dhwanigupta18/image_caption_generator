@@ -1,79 +1,96 @@
-# app.py
+# app.py (modify imports and initialization)
+
 from flask import Flask, render_template, request, redirect, url_for
-from caption_generator import ImageCaptioningModel # <--- ADD THIS LINE
+from caption_generator import ImageCaptioningModel, WatsonXEnhancer # <--- CHANGE THIS IMPORT
 import os
 from werkzeug.utils import secure_filename
-from flask import send_from_directory # If you chose this for serving uploads
+from flask import send_from_directory
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 
-# Configuration for uploads
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# Ensure the upload folder exists
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # Max upload size: 16MB
 
-# Initialize models globally to avoid reloading on each request
-# This might take a moment when the app starts for the first time
-print("Initializing BLIP model...")
-blip_model = ImageCaptioningModel()
-print("BLIP model initialized.")
-
-
+# Allowed image extensions
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+print("Initializing BLIP model...")
+blip_model = ImageCaptioningModel()
+print("BLIP model initialized.")
+
+print("Initializing Watsonx.ai Enhancer...")
+# Choose a model ID. Replace with the actual model you want to use from watsonx.ai
+# Common IBM models: "ibm/granite-13b-instruct-v2"
+# Or a third-party model you have access to: "meta-llama/llama-2-7b-chat", "mistralai/mistral-7b-instruct-v0.2"
+watsonx_enhancer = WatsonXEnhancer(model_id="ibm/granite-13b-instruct-v2") # <--- CHANGE THIS LINE
+print("Watsonx.ai Enhancer initialized.")
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     caption = None
-    original_caption = None
     image_url = None
     error = None
 
     if request.method == 'POST':
         # Check if a file was uploaded
-        if 'image' not in request.files:
-            error = 'No image file part'
-            return render_template('index.html', error=error)
+        if 'file' not in request.files:
+            error = 'No file part'
+            return render_template('index.html', caption=caption, image_url=image_url, error=error)
 
-        file = request.files['image']
+        file = request.files['file']
 
-        # If user does not select file, browser also submits an empty part without filename
+        # If user submits an empty form without selecting a file
         if file.filename == '':
-            error = 'No selected image file'
-            return render_template('index.html', error=error)
+            error = 'No selected file'
+            return render_template('index.html', caption=caption, image_url=image_url, error=error)
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
-            image_url = url_for('uploaded_file', filename=filename) # URL for displaying image
+            image_url = url_for('uploaded_file', filename=filename)
 
-            # Get optional prompt and GPT purpose
-            prompt = request.form.get('prompt')
-            gpt_purpose = request.form.get('gpt_purpose', 'general description')
+            try:
+                # 1. Generate initial caption with BLIP
+                original_caption = blip_model.generate_caption(filepath)
+                caption = original_caption
 
-            # 1. Generate caption using BLIP
-            original_caption = blip_model.generate_caption(filepath, prompt)
-            caption = original_caption # Initialize caption with BLIP's output
+                # Get the chosen purpose for refinement from the form
+                gpt_purpose = request.form.get('caption_purpose', 'general description')
 
+                # 2. Refine caption using Watsonx.ai (if configured)
+                if watsonx_enhancer.model: # Check if watsonx.ai model is initialized
+                    refined_caption = watsonx_enhancer.refine_caption(original_caption, gpt_purpose)
+                    if refined_caption and "Error" not in refined_caption:
+                        caption = refined_caption
+                    else:
+                        error = f"Watsonx.ai refinement failed: {refined_caption}. Displaying original BLIP caption."
+                else:
+                    error = "IBM Watsonx.ai not configured. Displaying original BLIP caption."
 
-            # Clean up the uploaded image after processing (optional, for production you might store them)
-            # os.remove(filepath) # Uncomment to remove after use, but image_url won't work then
+            except Exception as e:
+                error = f"Error generating or refining caption: {e}"
+                caption = "Failed to generate caption."
 
-        else:
-            error = 'Invalid file type. Allowed types: png, jpg, jpeg, gif.'
+            # Clean up the uploaded file after processing if not needed for display later
+            # (Or manage storage based on your needs)
+            # os.remove(filepath)
 
-    return render_template('index.html', caption=caption, original_caption=original_caption, image_url=image_url, error=error)
+    return render_template('index.html', caption=caption, image_url=image_url, error=error)
 
-# Route to serve uploaded files
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return redirect(url_for('static', filename='uploads/' + filename)) # Serve from static folder
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)
