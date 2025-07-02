@@ -1,0 +1,25 @@
+# Python specific ignores
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+.ipynb_checkpoints/ # If you used Jupyter notebooks at any point
+
+# VS Code specific ignores
+.vscode/
+
+# Flask/Web specific ignores
+uploads/ # Crucial: Don't commit uploaded user files
+instance/ # Flask instance folder (for specific configs, if you had one)
+
+# Environment variables (sensitive info)
+.env

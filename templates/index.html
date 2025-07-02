@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Caption Generator</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        form { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+        input[type="file"] { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        input[type="text"] { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .result { margin-top: 30px; padding: 20px; background-color: #f9f9f9; border: 1px solid #eee; border-radius: 4px; }
+        .result h2 { color: #555; }
+        .caption-box { background-color: white; border: 1px dashed #ccc; padding: 15px; border-radius: 4px; word-wrap: break-word; }
+        .image-preview { max-width: 100%; height: auto; display: block; margin-top: 15px; border: 1px solid #ddd; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>AI Image Caption Generator</h1>
+
+    <form method="post" enctype="multipart/form-data">
+        <label for="image">Upload Image:</label>
+        <input type="file" name="image" id="image" accept="image/*" required>
+
+        <label for="prompt">Optional Prompt (e.g., "a photo of"):</label>
+        <input type="text" name="prompt" id="prompt" placeholder="Leave empty for general caption">
+
+        <label for="gpt_purpose">GPT Refinement Purpose (e.g., "social media post", "alt text"):</label>
+        <input type="text" name="gpt_purpose" id="gpt_purpose" placeholder="general description">
+
+        <button type="submit">Generate Caption</button>
+    </form>
+
+    {% if caption or error %}
+    <div class="result">
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+        {% if original_caption %}
+            <h2>Original BLIP Caption:</h2>
+            <div class="caption-box">{{ original_caption }}</div>
+        {% endif %}
+        {% if caption and caption != original_caption %}
+            <h2>Refined GPT Caption:</h2>
+            <div class="caption-box">{{ caption }}</div>
+        {% endif %}
+        {% if image_url %}
+            <h2>Uploaded Image:</h2>
+            <img src="{{ image_url }}" alt="Uploaded Image" class="image-preview">
+        {% endif %}
+    </div>
+    {% endif %}
+</body>
+</html>
