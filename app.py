@@ -1,7 +1,7 @@
 # app.py (modify imports and initialization)
 
 from flask import Flask, render_template, request, redirect, url_for
-from caption_generator import ImageCaptioningModel, WatsonXEnhancer # <--- CHANGE THIS IMPORT
+from caption_generator import ImageCaptioningModel, WatsonXEnhancer 
 import os
 from werkzeug.utils import secure_filename
 from flask import send_from_directory
@@ -31,7 +31,7 @@ print("Initializing Watsonx.ai Enhancer...")
 # Choose a model ID. Replace with the actual model you want to use from watsonx.ai
 # Common IBM models: "ibm/granite-13b-instruct-v2"
 # Or a third-party model you have access to: "meta-llama/llama-2-7b-chat", "mistralai/mistral-7b-instruct-v0.2"
-watsonx_enhancer = WatsonXEnhancer(model_id="ibm/granite-13b-instruct-v2") # <--- CHANGE THIS LINE
+watsonx_enhancer = WatsonXEnhancer(model_id="meta-llama/llama-3-2-11b-vision-instruct") 
 print("Watsonx.ai Enhancer initialized.")
 
 

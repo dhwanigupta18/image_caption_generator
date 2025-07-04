@@ -3,7 +3,7 @@ from PIL import Image
 import torch
 from transformers import BlipProcessor, BlipForConditionalGeneration
 import os
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 from ibm_watsonx_ai.foundation_models import ModelInference
 from ibm_watsonx_ai.foundation_models.utils.enums import ModelTypes, DecodingMethods
 from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
@@ -68,7 +68,7 @@ if __name__ == "__main__":
             # Try to load a default font
             font = ImageFont.truetype("arial.ttf", 40)
         except IOError:
-            # Fallback if font not found (e.g., on some Linux systems)
+            # Fallback if font not found 
             font = ImageFont.load_default()
         d.text((50,150), "A red car parked on a street with trees.", fill=(255,255,0), font=font)
         img.save(dummy_image_path)
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         os.remove(dummy_image_path)
         print(f"Removed dummy image: {dummy_image_path}")
 
-load_dotenv()
+#load_dotenv()
 
 class WatsonXEnhancer:
     def __init__(self, model_id="meta-llama/llama-3-2-11b-vision-instruct"):
@@ -106,7 +106,7 @@ class WatsonXEnhancer:
             model_id (str): The ID of the foundation model to use (e.g., "ibm/granite-13b-instruct-v2").
         """
         self.api_key = os.getenv("IBM_CLOUD_API_KEY")
-        self.url = os.getenv("WATSONX_AI_URL")
+        self.url = "https://us-south.ml.cloud.ibm.com"
         self.project_id = os.getenv("WATSONX_AI_PROJECT_ID")
         self.model_id = model_id
 
@@ -115,6 +115,7 @@ class WatsonXEnhancer:
         print(f"Attempting to load .env from: {os.getcwd()}")
         print(f"IBM_CLOUD_API_KEY (first 5 chars): {self.api_key[:5] if self.api_key else 'None/Empty'}")
         print(f"WATSONX_AI_URL: {self.url if self.url else 'None/Empty'}")
+        print(f"WATSONX_AI_URL (HARDCODED): '{self.url}' (Length: {len(self.url) if self.url else 'None'})")
         print(f"WATSONX_AI_PROJECT_ID: {self.project_id if self.project_id else 'None/Empty'}")
         print("-------------------------------------------\n")
         # --- END DEBUG PRINTS ---
